@@ -10,13 +10,11 @@ on:
       - "**"
 
   schedule:
-    # Daily at 2 AM UTC
     - cron: '0 2 * * *'
 
   workflow_dispatch:
 
 jobs:
-
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -38,6 +36,8 @@ jobs:
       # --------------------------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # --------------------------------------------------
       # Gitleaks - Secret Detection
@@ -57,7 +57,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       # --------------------------------------------------
-      # Install Python Dependencies
+      # Install Python Security Tools
       # --------------------------------------------------
       - name: Install Python Security Tools
         run: |
@@ -84,10 +84,11 @@ jobs:
             --exclude=yarn.lock \
             --sarif \
             --output semgrep.sarif \
+            --error \
             .
 
       # --------------------------------------------------
-      # Upload SARIF to GitHub Security Dashboard
+      # Upload SARIF
       # --------------------------------------------------
       - name: Upload SARIF Results
         if: always()
@@ -96,11 +97,10 @@ jobs:
           sarif_file: semgrep.sarif
 
       # --------------------------------------------------
-      # Run pip-audit (Python CVEs)
+      # Run pip-audit
       # --------------------------------------------------
       - name: Run pip-audit
         id: pip_audit
-        continue-on-error: true
         run: |
           if [ -f requirements.txt ]; then
             pip-audit -r requirements.txt
@@ -123,50 +123,23 @@ jobs:
       # --------------------------------------------------
       - name: Run npm audit
         id: npm_audit
-        continue-on-error: true
         run: |
           if [ -f frontend/package.json ]; then
             cd frontend
-            npm install
+            npm ci
             npm audit --audit-level=high
           elif [ -f package.json ]; then
-            npm install
+            npm ci
             npm audit --audit-level=high
           else
             echo "No package.json found"
           fi
 
       # --------------------------------------------------
-      # Determine Final Scan Status
-      # --------------------------------------------------
-      - name: Check Scan Status
-        id: scan_status
-        run: |
-          FAILED=false
-
-          if [ "${{ steps.gitleaks.outcome }}" != "success" ]; then
-            FAILED=true
-          fi
-
-          if [ "${{ steps.semgrep.outcome }}" != "success" ]; then
-            FAILED=true
-          fi
-
-          if [ "${{ steps.pip_audit.outcome }}" != "success" ]; then
-            FAILED=true
-          fi
-
-          if [ "${{ steps.npm_audit.outcome }}" != "success" ]; then
-            FAILED=true
-          fi
-
-          echo "FAILED=$FAILED" >> $GITHUB_ENV
-
-      # --------------------------------------------------
       # Send Email Notification
       # --------------------------------------------------
       - name: Send Security Alert Email
-        if: env.FAILED == 'true'
+        if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -207,7 +180,7 @@ jobs:
       # Fail Pipeline
       # --------------------------------------------------
       - name: Fail Pipeline
-        if: env.FAILED == 'true'
+        if: failure()
         run: |
           echo "Security scan failed."
           exit 1

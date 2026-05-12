@@ -218,9 +218,9 @@ jobs:
       - name: Security Warning Summary
         if: env.FAILED == 'true'
         run: |
-          echo "⚠️ Security vulnerabilities or secrets were detected."
-          echo "⚠️ Workflow is running in MONITORING MODE."
-          echo "⚠️ Pipeline will NOT fail."
+          echo " Security vulnerabilities or secrets were detected."
+          echo " Workflow is running in MONITORING MODE."
+          echo " Pipeline will NOT fail."
 
       # --------------------------------------------------
       # Send Email Notification
@@ -237,7 +237,7 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
 
           subject: |
-            ⚠️ Security Findings Detected - ${{ github.repository }}
+            Security Findings Detected - ${{ github.repository }}
 
           to: jabhi4441@gmail.com
           from: GitHub Security Bot
@@ -246,8 +246,8 @@ jobs:
             Security vulnerabilities or leaked secrets were detected.
 
             NOTE:
-            This workflow is running in monitoring mode.
-            The pipeline was NOT failed intentionally.
+            The commit was made to github.
+            Please review the findings and take necessary actions before pushing it onto the production server.
 
             Repository:
             ${{ github.repository }}

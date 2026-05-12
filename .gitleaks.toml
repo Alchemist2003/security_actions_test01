@@ -1,0 +1,10 @@
+title = "Custom Gitleaks Config"
+
+[[rules]]
+id = "openai-api-key"
+
+description = "OpenAI API Key"
+
+regex = '''sk-(proj-)?[A-Za-z0-9_\-]{20,}'''
+
+tags = ["key", "openai", "secret"]

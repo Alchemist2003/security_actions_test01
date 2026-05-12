@@ -5,3 +5,11 @@ export default function App() {
     <div dangerouslySetInnerHTML={{ __html: html }} />
   );
 }
+export default function App() {
+  const params = new URLSearchParams(window.location.search);
+  const html = params.get("html");
+
+  return (
+    <div dangerouslySetInnerHTML={{ __html: html }} />
+  );
+}
